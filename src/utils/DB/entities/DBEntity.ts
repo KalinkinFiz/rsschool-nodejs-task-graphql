@@ -25,7 +25,7 @@ type OptionsInArrayAnyOf<T, K extends keyof T> = Required<
 export default abstract class DBEntity<
   Entity extends { id: string },
   ChangeDTO,
-  CreateDTO
+  CreateDTO,
 > {
   protected entities: Entity[] = [];
 
@@ -33,45 +33,45 @@ export default abstract class DBEntity<
 
   private runChecks<T extends Entity, K extends keyof T>(
     entity: T,
-    options: Options<T, K>
+    options: Options<T, K>,
   ) {
     if (options.equals) {
       return lodash.isEqual(entity[options.key], options.equals);
     }
     if (options.equalsAnyOf) {
       return options.equalsAnyOf.some((inputValue) =>
-        lodash.isEqual(entity[options.key], inputValue)
+        lodash.isEqual(entity[options.key], inputValue),
       );
     }
     if (options.inArray) {
-      const array = entity[options.key] as typeof options.inArray[];
+      const array = entity[options.key] as (typeof options.inArray)[];
       return array.some((value) => lodash.isEqual(value, options.inArray));
     }
     if (options.inArrayAnyOf) {
-      const array = entity[options.key] as typeof options.inArray[];
+      const array = entity[options.key] as (typeof options.inArray)[];
       return array.some((value) =>
         options.inArrayAnyOf?.some((valueInput) =>
-          lodash.isEqual(value, valueInput)
-        )
+          lodash.isEqual(value, valueInput),
+        ),
       );
     }
     return false;
   }
 
   async findOne<K extends keyof Entity>(
-    option: OptionsEquals<Entity, K>
+    option: OptionsEquals<Entity, K>,
   ): Promise<Entity | null>;
   async findOne<K extends keyof Entity>(
-    option: OptionsEqualsAnyOf<Entity, K>
+    option: OptionsEqualsAnyOf<Entity, K>,
   ): Promise<Entity | null>;
   async findOne<K extends keyof Entity>(
-    options: OptionsInArray<Entity, K>
+    options: OptionsInArray<Entity, K>,
   ): Promise<Entity | null>;
   async findOne<K extends keyof Entity>(
-    options: OptionsInArrayAnyOf<Entity, K>
+    options: OptionsInArrayAnyOf<Entity, K>,
   ): Promise<Entity | null>;
   async findOne<K extends keyof Entity>(
-    options: Options<Entity, K>
+    options: Options<Entity, K>,
   ): Promise<Entity | null> {
     return (
       this.entities.find((entity) => this.runChecks(entity, options)) ?? null
@@ -79,20 +79,20 @@ export default abstract class DBEntity<
   }
 
   async findMany<K extends keyof Entity>(
-    options: OptionsEquals<Entity, K>
+    options: OptionsEquals<Entity, K>,
   ): Promise<Entity[]>;
   async findMany<K extends keyof Entity>(
-    option: OptionsEqualsAnyOf<Entity, K>
+    option: OptionsEqualsAnyOf<Entity, K>,
   ): Promise<Entity[]>;
   async findMany<K extends keyof Entity>(
-    option: OptionsInArray<Entity, K>
+    option: OptionsInArray<Entity, K>,
   ): Promise<Entity[]>;
   async findMany<K extends keyof Entity>(
-    option: OptionsInArrayAnyOf<Entity, K>
+    option: OptionsInArrayAnyOf<Entity, K>,
   ): Promise<Entity[]>;
   async findMany<K extends keyof Entity>(): Promise<Entity[]>;
   async findMany<K extends keyof Entity>(
-    options?: Options<Entity, K>
+    options?: Options<Entity, K>,
   ): Promise<Entity[]> {
     if (!options) {
       return this.entities;
