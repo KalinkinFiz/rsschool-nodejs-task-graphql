@@ -11,7 +11,7 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
   fastify,
 ): Promise<void> => {
   fastify.get('/', async function (_request, reply): Promise<UserEntity[]> {
-    return reply.send(this.db.users.findMany());
+    return reply.status(200).send(this.db.users.findMany());
   });
 
   fastify.get(
@@ -29,7 +29,7 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
 
       if (!user) return reply.code(404).send({ message: 'User not found' });
 
-      return reply.send(user);
+      return reply.status(200).send(user);
     },
   );
 
@@ -89,7 +89,7 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
           });
         }
 
-        return reply.send(user);
+        return reply.status(204).send(user);
       } catch {
         return reply.status(400).send({ message: 'Bad Request' });
       }
@@ -169,7 +169,7 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         subscribedToUserIds: currentUser!.subscribedToUserIds,
       });
 
-      return reply.send(newUser);
+      return reply.status(200).send(newUser);
     },
   );
 
@@ -194,7 +194,7 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         request.body,
       );
 
-      return reply.send(newUser);
+      return reply.status(200).send(newUser);
     },
   );
 };

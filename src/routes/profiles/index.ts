@@ -7,7 +7,7 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
   fastify,
 ): Promise<void> => {
   fastify.get('/', async function (_request, reply): Promise<ProfileEntity[]> {
-    return reply.send(this.db.profiles.findMany());
+    return reply.status(200).send(this.db.profiles.findMany());
   });
 
   fastify.get(
@@ -27,7 +27,7 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         return reply.status(404).send({ message: 'Profile not found' });
       }
 
-      return reply.send(profile);
+      return reply.status(200).send(profile);
     },
   );
 
@@ -45,7 +45,7 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
       });
 
       if (!memberType) {
-        return reply.status(400).send({ message: 'Member type not found' });
+        return reply.status(400).send({ message: 'Bad Request' });
       }
 
       const hasUserProfile = await this.db.profiles.findOne({
@@ -54,14 +54,12 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
       });
 
       if (hasUserProfile) {
-        return reply
-          .status(400)
-          .send({ message: 'User already has a profile' });
+        return reply.status(400).send({ message: 'User has profile' });
       }
 
-      const newProfile = await fastify.db.profiles.create(request.body);
+      const newProfile = await this.db.profiles.create(request.body);
 
-      return reply.send(newProfile);
+      return reply.status(201).send(newProfile);
     },
   );
 
@@ -79,12 +77,12 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
       });
 
       if (!profile) {
-        return reply.code(400).send({ message: 'Profile not found' });
+        return reply.code(400).send({ message: 'Bad Request' });
       }
 
       const deleteProfile = await this.db.profiles.delete(request.params.id);
 
-      return reply.send(deleteProfile);
+      return reply.status(204).send(deleteProfile);
     },
   );
 
@@ -97,16 +95,21 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
       },
     },
     async function (request, reply): Promise<ProfileEntity> {
-      try {
-        const updateProfile = await this.db.profiles.change(
-          request.params.id,
-          request.body,
-        );
+      const profile = await this.db.profiles.findOne({
+        key: 'id',
+        equals: request.params.id,
+      });
 
-        return reply.send(updateProfile);
-      } catch (err: any) {
-        return reply.code(400).send({ message: err.message });
+      if (!profile) {
+        return reply.code(400).send({ message: 'Bad Request' });
       }
+
+      const updateProfile = await this.db.profiles.change(
+        request.params.id,
+        request.body,
+      );
+
+      return reply.status(200).send(updateProfile);
     },
   );
 };
