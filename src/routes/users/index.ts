@@ -58,10 +58,19 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
       try {
         const user = await this.db.users.delete(request.params.id);
 
+        const userPosts = await this.db.posts.findMany({
+          key: 'userId',
+          equals: request.params.id,
+        });
+
         const subscribers = await this.db.users.findMany({
           key: 'subscribedToUserIds',
           equals: [user.id]!,
         });
+
+        for (const userPost of userPosts) {
+          await this.db.posts.delete(userPost.id);
+        }
 
         for (const subscriber of subscribers) {
           await this.db.users.change(subscriber.id, {
@@ -142,11 +151,10 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         return reply.status(400).send({ message: 'Bad Request' });
       }
 
-      const subscribedUserIndex = currentUser!.subscribedToUserIds.indexOf(
-        request.params.id,
+      currentUser!.subscribedToUserIds.splice(
+        currentUser!.subscribedToUserIds.indexOf(request.params.id),
+        1,
       );
-
-      currentUser!.subscribedToUserIds.splice(subscribedUserIndex, 1);
 
       const newUser = await this.db.users.change(request.body.userId, {
         subscribedToUserIds: currentUser!.subscribedToUserIds,
