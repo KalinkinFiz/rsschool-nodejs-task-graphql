@@ -60,17 +60,26 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
 
         const userPosts = await this.db.posts.findMany({
           key: 'userId',
-          equals: request.params.id,
-        });
-
-        const subscribers = await this.db.users.findMany({
-          key: 'subscribedToUserIds',
-          equals: [user.id]!,
+          equals: user.id,
         });
 
         for (const userPost of userPosts) {
           await this.db.posts.delete(userPost.id);
         }
+
+        const userProfile = await this.db.profiles.findOne({
+          key: 'userId',
+          equals: user.id,
+        });
+
+        if (userProfile) {
+          await this.db.profiles.delete(userProfile.id);
+        }
+
+        const subscribers = await this.db.users.findMany({
+          key: 'subscribedToUserIds',
+          equals: [user.id]!,
+        });
 
         for (const subscriber of subscribers) {
           await this.db.users.change(subscriber.id, {
