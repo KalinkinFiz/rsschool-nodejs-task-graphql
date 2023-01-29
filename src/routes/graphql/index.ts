@@ -3,7 +3,6 @@ import {
   graphql,
   GraphQLID,
   GraphQLInt,
-  GraphQLList,
   GraphQLNonNull,
   GraphQLObjectType,
   GraphQLSchema,
@@ -12,6 +11,12 @@ import {
 
 import { graphqlBodySchema } from './schema';
 import { user, post, memberType, profile } from './types';
+import {
+  getUserQueries,
+  getPostQueries,
+  getProfileQueries,
+  getMemberTypeQueries,
+} from './queries';
 
 const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
   fastify,
@@ -28,103 +33,13 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         query: new GraphQLObjectType({
           name: 'Query',
           fields: {
-            users: {
-              type: new GraphQLList(user),
-              resolve() {
-                return fastify.db.users.findMany();
-              },
-            },
-            profiles: {
-              type: new GraphQLList(profile),
-              resolve() {
-                return fastify.db.profiles.findMany();
-              },
-            },
-            posts: {
-              type: new GraphQLList(post),
-              resolve() {
-                return fastify.db.posts.findMany();
-              },
-            },
-            memberTypes: {
-              type: new GraphQLList(memberType),
-              resolve() {
-                return fastify.db.memberTypes.findMany();
-              },
-            },
+            ...getUserQueries(fastify),
 
-            user: {
-              type: user,
-              args: {
-                id: { type: GraphQLID },
-              },
-              async resolve(_, args) {
-                const user = await fastify.db.users.findOne({
-                  key: 'id',
-                  equals: args.id,
-                });
+            ...getPostQueries(fastify),
 
-                if (!user) {
-                  throw fastify.httpErrors.notFound('User not found');
-                }
+            ...getProfileQueries(fastify),
 
-                return user;
-              },
-            },
-            profile: {
-              type: profile,
-              args: {
-                id: { type: GraphQLID },
-              },
-              async resolve(_, args) {
-                const profile = await fastify.db.profiles.findOne({
-                  key: 'id',
-                  equals: args.id,
-                });
-
-                if (!profile) {
-                  throw fastify.httpErrors.notFound('Profile not found');
-                }
-
-                return profile;
-              },
-            },
-            post: {
-              type: post,
-              args: {
-                id: { type: GraphQLID },
-              },
-              async resolve(_, args) {
-                const post = await fastify.db.posts.findOne({
-                  key: 'id',
-                  equals: args.id,
-                });
-
-                if (!post) {
-                  throw fastify.httpErrors.notFound('Post not found');
-                }
-
-                return post;
-              },
-            },
-            memberType: {
-              type: memberType,
-              args: {
-                id: { type: GraphQLID },
-              },
-              async resolve(_, args) {
-                const memberType = await fastify.db.memberTypes.findOne({
-                  key: 'id',
-                  equals: args.id,
-                });
-
-                if (!memberType) {
-                  throw fastify.httpErrors.notFound('MemberType not found');
-                }
-
-                return memberType;
-              },
-            },
+            ...getMemberTypeQueries(fastify),
           },
         }),
 
