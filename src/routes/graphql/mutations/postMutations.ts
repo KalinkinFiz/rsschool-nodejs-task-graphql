@@ -1,20 +1,15 @@
 import { FastifyInstance } from 'fastify';
-import { GraphQLID, GraphQLNonNull, GraphQLString } from 'graphql';
 
-import { post } from '../types';
+import { post, CreatePostInput, UpdatePostInput } from '../types';
 
 export const postMutations = (fastify: FastifyInstance) => ({
   createNewPost: {
     type: post,
-    args: {
-      userId: { type: new GraphQLNonNull(GraphQLID) },
-      title: { type: new GraphQLNonNull(GraphQLString) },
-      content: { type: new GraphQLNonNull(GraphQLString) },
-    },
+    args: { post: { type: CreatePostInput } },
     async resolve(_: any, args: any) {
       const user = await fastify.db.users.findOne({
         key: 'id',
-        equals: args.userId,
+        equals: args.post.userId,
       });
 
       if (!user) {
@@ -22,9 +17,9 @@ export const postMutations = (fastify: FastifyInstance) => ({
       }
 
       const post = await fastify.db.posts.create({
-        userId: args.userId,
-        title: args.title,
-        content: args.content,
+        userId: args.post.userId,
+        title: args.post.title,
+        content: args.post.content,
       });
 
       return post;
@@ -33,22 +28,18 @@ export const postMutations = (fastify: FastifyInstance) => ({
 
   updatePost: {
     type: post,
-    args: {
-      id: { type: new GraphQLNonNull(GraphQLID) },
-      title: { type: GraphQLString },
-      content: { type: GraphQLString },
-    },
+    args: { post: { type: UpdatePostInput } },
     async resolve(_: any, args: any) {
       const post = await fastify.db.posts.findOne({
         key: 'id',
-        equals: args.id,
+        equals: args.post.id,
       });
 
       if (!post) {
         throw fastify.httpErrors.notFound('Post not found');
       }
 
-      const newPost = await fastify.db.posts.change(args.id, args);
+      const newPost = await fastify.db.posts.change(args.post.id, args.post);
 
       return newPost;
     },

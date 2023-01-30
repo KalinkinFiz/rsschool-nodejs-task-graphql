@@ -1,19 +1,15 @@
 import { FastifyInstance } from 'fastify';
-import { GraphQLID, GraphQLNonNull } from 'graphql';
 
-import { user } from '../types';
+import { user, SubscribeUserInput, UnsubscribeUserInput } from '../types';
 
 export const subscriptionMutations = (fastify: FastifyInstance) => ({
   subscribedToUser: {
     type: user,
-    args: {
-      id: { type: new GraphQLNonNull(GraphQLID) },
-      subscribedToUserId: { type: new GraphQLNonNull(GraphQLID) },
-    },
+    args: { user: { type: SubscribeUserInput } },
     async resolve(_: any, args: any) {
       const user = await fastify.db.users.findOne({
         key: 'id',
-        equals: args.id,
+        equals: args.user.id,
       });
 
       if (!user) {
@@ -22,27 +18,27 @@ export const subscriptionMutations = (fastify: FastifyInstance) => ({
 
       const subscribeToUser = await fastify.db.users.findOne({
         key: 'id',
-        equals: args.subscribedToUserId,
+        equals: args.user.subscribedToUserId,
       });
 
       if (!subscribeToUser) {
         throw fastify.httpErrors.notFound('subscribeToUser not found');
       }
 
-      if (args.id === args.subscribedToUserId) {
+      if (args.user.id === args.user.subscribedToUserId) {
         throw fastify.httpErrors.badRequest('Subscribe to yourself');
       }
 
-      if (subscribeToUser.subscribedToUserIds.includes(args.id)) {
+      if (subscribeToUser.subscribedToUserIds.includes(args.user.id)) {
         throw fastify.httpErrors.badRequest('User subscribed');
       }
 
       const updateUser = await fastify.db.users.change(
-        args.subscribedToUserId,
+        args.user.subscribedToUserId,
         {
           subscribedToUserIds: [
             ...subscribeToUser.subscribedToUserIds,
-            args.id,
+            args.user.id,
           ],
         },
       );
@@ -53,14 +49,11 @@ export const subscriptionMutations = (fastify: FastifyInstance) => ({
 
   unsubscribedToUser: {
     type: user,
-    args: {
-      id: { type: new GraphQLNonNull(GraphQLID) },
-      unsubscribedToUserId: { type: new GraphQLNonNull(GraphQLID) },
-    },
+    args: { user: { type: UnsubscribeUserInput } },
     async resolve(_: any, args: any) {
       const user = await fastify.db.users.findOne({
         key: 'id',
-        equals: args.id,
+        equals: args.user.id,
       });
 
       if (!user) {
@@ -69,25 +62,25 @@ export const subscriptionMutations = (fastify: FastifyInstance) => ({
 
       const unsubscribeToUser = await fastify.db.users.findOne({
         key: 'id',
-        equals: args.unsubscribedToUserId,
+        equals: args.user.unsubscribedToUserId,
       });
 
       if (!unsubscribeToUser) {
         throw fastify.httpErrors.notFound('unsubscribeToUser not found');
       }
 
-      if (args.id === args.unsubscribedToUserId) {
+      if (args.user.id === args.user.unsubscribedToUserId) {
         throw fastify.httpErrors.badRequest('Unsubscribe to yourself');
       }
 
       const { subscribedToUserIds } = unsubscribeToUser;
 
-      const cb = (id: string | number) => id !== args.id;
+      const cb = (id: string | number) => id !== args.user.id;
       const newSubscribedToUserIds = subscribedToUserIds.filter(cb);
 
       try {
         const updateUser = await fastify.db.users.change(
-          args.unsubscribedToUserId,
+          args.user.unsubscribedToUserId,
           { subscribedToUserIds: newSubscribedToUserIds },
         );
 

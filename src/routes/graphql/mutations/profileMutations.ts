@@ -1,25 +1,15 @@
 import { FastifyInstance } from 'fastify';
-import { GraphQLID, GraphQLInt, GraphQLNonNull, GraphQLString } from 'graphql';
 
-import { profile } from '../types';
+import { profile, CreateProfileInput, UpdateProfileInput } from '../types';
 
 export const profileMutations = (fastify: FastifyInstance) => ({
   createNewProfile: {
     type: profile,
-    args: {
-      avatar: { type: new GraphQLNonNull(GraphQLString) },
-      sex: { type: new GraphQLNonNull(GraphQLString) },
-      birthday: { type: new GraphQLNonNull(GraphQLInt) },
-      country: { type: new GraphQLNonNull(GraphQLString) },
-      street: { type: new GraphQLNonNull(GraphQLString) },
-      city: { type: new GraphQLNonNull(GraphQLString) },
-      userId: { type: new GraphQLNonNull(GraphQLID) },
-      memberTypeId: { type: new GraphQLNonNull(GraphQLString) },
-    },
+    args: { profile: { type: CreateProfileInput } },
     async resolve(_: any, args: any) {
       const user = await fastify.db.users.findOne({
         key: 'id',
-        equals: args.userId,
+        equals: args.profile.userId,
       });
 
       if (!user) {
@@ -28,7 +18,7 @@ export const profileMutations = (fastify: FastifyInstance) => ({
 
       const memberType = await fastify.db.memberTypes.findOne({
         key: 'id',
-        equals: args.memberTypeId,
+        equals: args.profile.memberTypeId,
       });
 
       if (!memberType) {
@@ -37,44 +27,35 @@ export const profileMutations = (fastify: FastifyInstance) => ({
 
       const hasUserProfile = await fastify.db.profiles.findOne({
         key: 'userId',
-        equals: args.userId,
+        equals: args.profile.userId,
       });
 
       if (hasUserProfile) {
         throw fastify.httpErrors.badRequest('User has profile');
       }
 
-      const profile = await fastify.db.profiles.create({
-        avatar: args.avatar,
-        sex: args.sex,
-        birthday: args.birthday,
-        country: args.country,
-        street: args.street,
-        city: args.city,
-        userId: args.userId,
-        memberTypeId: args.memberTypeId,
+      const newProfile = await fastify.db.profiles.create({
+        avatar: args.profile.avatar,
+        sex: args.profile.sex,
+        birthday: args.profile.birthday,
+        country: args.profile.country,
+        street: args.profile.street,
+        city: args.profile.city,
+        userId: args.profile.userId,
+        memberTypeId: args.profile.memberTypeId,
       });
 
-      return profile;
+      return newProfile;
     },
   },
 
   updateProfile: {
     type: profile,
-    args: {
-      id: { type: new GraphQLNonNull(GraphQLID) },
-      avatar: { type: GraphQLString },
-      sex: { type: GraphQLString },
-      birthday: { type: GraphQLInt },
-      country: { type: GraphQLString },
-      street: { type: GraphQLString },
-      city: { type: GraphQLString },
-      memberTypeId: { type: GraphQLString },
-    },
+    args: { profile: { type: UpdateProfileInput } },
     async resolve(_: any, args: any) {
       const profile = await fastify.db.profiles.findOne({
         key: 'id',
-        equals: args.id,
+        equals: args.profile.id,
       });
 
       if (!profile) {
@@ -83,14 +64,17 @@ export const profileMutations = (fastify: FastifyInstance) => ({
 
       const memberType = await fastify.db.memberTypes.findOne({
         key: 'id',
-        equals: args.memberTypeId,
+        equals: args.profile.memberTypeId,
       });
 
       if (!memberType) {
         throw fastify.httpErrors.notFound('MemberType not found');
       }
 
-      const newProfile = await fastify.db.profiles.change(args.id, args);
+      const newProfile = await fastify.db.profiles.change(
+        args.profile.id,
+        args.profile,
+      );
 
       return newProfile;
     },
