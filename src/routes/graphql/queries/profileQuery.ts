@@ -17,10 +17,7 @@ export const getProfileQueries = (fastify: FastifyInstance) => ({
       id: { type: GraphQLID },
     },
     async resolve(_: any, args: { id: any }) {
-      const profile = await fastify.db.profiles.findOne({
-        key: 'id',
-        equals: args.id,
-      });
+      const profile = await fastify.loaders.profiles.load(args.id);
 
       if (!profile) {
         throw fastify.httpErrors.notFound('Profile not found');

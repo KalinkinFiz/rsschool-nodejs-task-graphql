@@ -1,5 +1,6 @@
 import { FastifyPluginAsyncJsonSchemaToTs } from '@fastify/type-provider-json-schema-to-ts';
 import {
+  ExecutionResult,
   graphql,
   GraphQLObjectType,
   GraphQLSchema,
@@ -68,15 +69,20 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
 
       const errors = validate(schema, parse(String(query)), [depthLimit(6)]);
 
-      if (errors.length > 0) {
-        reply.send({ errors: errors, data: null });
+      this.loaders.clear();
 
-        return;
+      if (errors.length > 0) {
+        const err: ExecutionResult = {
+          errors: errors,
+          data: null,
+        };
+
+        return err;
       }
 
       return await graphql({
         schema: schema,
-        source: String(query),
+        source: query!,
         variableValues: variables,
         contextValue: fastify,
       });

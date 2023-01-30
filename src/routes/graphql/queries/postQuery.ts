@@ -17,10 +17,7 @@ export const getPostQueries = (fastify: FastifyInstance) => ({
       id: { type: GraphQLID },
     },
     async resolve(_: any, args: { id: any }) {
-      const post = await fastify.db.posts.findOne({
-        key: 'id',
-        equals: args.id,
-      });
+      const post = await fastify.loaders.posts.load(args.id);
 
       if (!post) {
         throw fastify.httpErrors.notFound('Post not found');

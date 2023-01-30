@@ -17,10 +17,7 @@ export const getUserQueries = (fastify: FastifyInstance) => ({
       id: { type: GraphQLID },
     },
     async resolve(_: any, args: { id: string }) {
-      const user = await fastify.db.users.findOne({
-        key: 'id',
-        equals: args.id,
-      });
+      const user = await fastify.loaders.users.load(args.id);
 
       if (!user) {
         throw fastify.httpErrors.notFound('User not found');

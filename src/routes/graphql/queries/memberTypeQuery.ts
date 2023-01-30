@@ -17,10 +17,7 @@ export const getMemberTypeQueries = (fastify: FastifyInstance) => ({
       id: { type: GraphQLID },
     },
     async resolve(_: any, args: { id: any }) {
-      const memberType = await fastify.db.memberTypes.findOne({
-        key: 'id',
-        equals: args.id,
-      });
+      const memberType = await fastify.loaders.memberTypes.load(args.id);
 
       if (!memberType) {
         throw fastify.httpErrors.notFound('MemberType not found');
