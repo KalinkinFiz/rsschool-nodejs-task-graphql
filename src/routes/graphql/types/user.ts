@@ -1,10 +1,14 @@
 import { FastifyInstance } from 'fastify';
-import { GraphQLList, GraphQLObjectType, GraphQLString } from 'graphql';
+import {
+  GraphQLList,
+  GraphQLObjectType,
+  GraphQLOutputType,
+  GraphQLString,
+} from 'graphql';
 
 import { profile, post, memberType } from './index';
 
-// @ts-ignore
-export const user = new GraphQLObjectType({
+export const user: GraphQLOutputType = new GraphQLObjectType({
   name: 'User',
   fields: () => ({
     id: { type: GraphQLString },
